@@ -93,38 +93,110 @@
 <body>
     <h1>Kamu sedang offline!</h1>
     <h3>Coba main game ini dulu:</h3>
-    <div id="game-area">
-        <p>Tebak angka antara 1 sampai 10!</p>
-        <input type="number" id="guess" min="1" max="10" />
-        <button onclick="checkGuess()">Tebak!</button>
-        <p id="result"></p>
-        <button onclick="resetGame()">Main Lagi</button>
-    </div>
-    <script>
-        let randomNumber = Math.floor(Math.random() * 10) + 1;
-        let attempts = 0;
+        <div id="game-area">
+        <div id="start-screen">
+            <p>Tekan mulai untuk bermain hitung cepat!</p>
+            <button onclick="startGame()">Mulai</button>
+        </div>
 
-        function checkGuess() {
-            const guess = parseInt(document.getElementById('guess').value);
-            attempts++;
-            if (guess === randomNumber) {
-                document.getElementById('result').textContent = `Benar! Kamu menebak dalam ${attempts} percobaan.`;
-            } else if (guess < randomNumber) {
-                document.getElementById('result').textContent = 'Terlalu kecil!';
-            } else if (guess > randomNumber) {
-                document.getElementById('result').textContent = 'Terlalu besar!';
+        <div id="quiz-area" style="display:none;">
+            <p id="question">Berapa hasilnya?</p>
+            <div id="choices"></div>
+            <p id="timer">Waktu: 30 detik</p>
+            <p id="score">Skor: 0</p>
+        </div>
+
+        <div id="end-screen" style="display:none;">
+            <p id="final-score"></p>
+            <button onclick="resetGame()">Main Lagi</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        let timer;
+        let correctAnswer;
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'block';
+            updateScore();
+            nextQuestion();
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = `Waktu: ${timeLeft} detik`;
+                if (timeLeft <= 0) {
+                    endGame(true);
+                }
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            const a = Math.floor(Math.random() * 12) + 1;
+            const b = Math.floor(Math.random() * 12) + 1;
+            const isAddition = Math.random() > 0.5;
+
+            correctAnswer = isAddition ? a + b : a - b;
+            document.getElementById('question').textContent = isAddition
+                ? `${a} + ${b} = ?`
+                : `${a} - ${b} = ?`;
+
+            const choices = generateChoices(correctAnswer);
+            const choicesDiv = document.getElementById('choices');
+            choicesDiv.innerHTML = '';
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.textContent = choice;
+                btn.onclick = () => handleAnswer(choice);
+                choicesDiv.appendChild(btn);
+            });
+        }
+
+        function generateChoices(correct) {
+            const choices = new Set([correct]);
+            while (choices.size < 4) {
+                let option = correct + Math.floor(Math.random() * 11) - 5;
+                if (option !== correct && option >= -24 && option <= 24) {
+                    choices.add(option);
+                }
+            }
+            return [...choices].sort(() => Math.random() - 0.5);
+        }
+
+        function handleAnswer(answer) {
+            if (answer === correctAnswer) {
+                score++;
+                updateScore();
+                nextQuestion();
             } else {
-                document.getElementById('result').textContent = 'Masukkan angka yang valid!';
+                endGame(false);
             }
         }
 
+        function updateScore() {
+            document.getElementById('score').textContent = `Skor: ${score}`;
+        }
+
+        function endGame(timeout = false) {
+            clearInterval(timer);
+            document.getElementById('quiz-area').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            document.getElementById('final-score').textContent = timeout
+                ? `Waktu habis! Skormu: ${score}`
+                : `Jawaban salah! Skormu: ${score}`;
+        }
+
         function resetGame() {
-            randomNumber = Math.floor(Math.random() * 10) + 1;
-            attempts = 0;
-            document.getElementById('guess').value = '';
-            document.getElementById('result').textContent = '';
+            document.getElementById('start-screen').style.display = 'block';
+            document.getElementById('end-screen').style.display = 'none';
+            document.getElementById('quiz-area').style.display = 'none';
         }
     </script>
+
 </body>
 
 </html>
